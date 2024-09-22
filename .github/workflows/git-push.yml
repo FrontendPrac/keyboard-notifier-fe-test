@@ -14,8 +14,11 @@ jobs:
         run: apk add ruby && gem install mustache
       - name: creates output
         run: sh ./build.sh
-      - name: Pushes to another repository
-        id: push_directory
+
+      # Push to 'main' branch if the event is triggered on 'main'
+      - name: Pushes to another repository (main branch)
+        if: github.ref == 'refs/heads/main'
+        id: push_directory_main
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.GBNS_GITHUB_KEY }}
@@ -25,6 +28,22 @@ jobs:
           destination-repository-name: keyboard-notifier-fe-test
           user-email: ${{ secrets.GBNS_ACCOUNT_EMAIL }}
           commit-message: ${{ github.event.commits[0].message }}
-          target-branch: ${{ github.ref == 'refs/heads/main' && 'main' || 'develop' }} # 브랜치에 따라 target-branch를 변경
+          target-branch: main
+
+      # Push to 'develop' branch if the event is triggered on 'develop'
+      - name: Pushes to another repository (develop branch)
+        if: github.ref == 'refs/heads/develop'
+        id: push_directory_develop
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GBNS_GITHUB_KEY }}
+        with:
+          source-directory: 'output'
+          destination-github-username: Kidongg
+          destination-repository-name: keyboard-notifier-fe-test
+          user-email: ${{ secrets.GBNS_ACCOUNT_EMAIL }}
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: develop
+
       - name: Test get variable exported by push-to-another-repository
         run: echo $DESTINATION_CLONED_DIRECTORY
