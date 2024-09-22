@@ -5,7 +5,8 @@ on:
     branches: [develop, main]
 
 jobs:
-  build:
+  build-main:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     container: pandoc/latex
     steps:
@@ -14,7 +15,30 @@ jobs:
         run: apk add ruby && gem install mustache
       - name: creates output
         run: sh ./build.sh
-      - name: Pushes to another repository
+      - name: Pushes to another repository (main)
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GBNS_GITHUB_KEY }}
+        with:
+          source-directory: 'output'
+          destination-github-username: Kidongg
+          destination-repository-name: keyboard-notifier-fe-test
+          user-email: ${{ secrets.GBNS_ACCOUNT_EMAIL }}
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: main
+
+  build-develop:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    container: pandoc/latex
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install mustache (to update the date)
+        run: apk add ruby && gem install mustache
+      - name: creates output
+        run: sh ./build.sh
+      - name: Pushes to another repository (develop)
         id: push_directory
         uses: cpina/github-action-push-to-another-repository@main
         env:
